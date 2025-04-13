@@ -15,11 +15,10 @@ async function simulateDEX() {
     const tokenBABI = tokenBArtifact.abi;
 
     // 2. Define deployed contract addresses.
-    const dexAddress = "0x9bF88fAe8CF8BaB76041c1db6467E7b37b977dD7";       // DEX.sol deployed address
-    const tokenAAddress = "0x3D42AD7A3AEFDf99038Cd61053913CFCA4944b95";   // TokenA deployed address
-    const tokenBAddress = "0x417Bf7C9dc415FEEb693B6FE313d1186C692600F";   // TokenB deployed address
-    const tokenADeployer = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";    // Account which deployed tokenA
-    const tokenBDeployer = "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2";    // Account which deployed tokenB
+    const dexAddress = "0xf8e81D47203A594245E36C48e151709F0C19fBe8";       // DEX.sol deployed address
+    const tokenAAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";   // TokenA deployed address
+    const tokenBAddress = "0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8";   // TokenB deployed address
+    const tokenDeployer = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";    // Token deployer account
 
     // 3. Create contract instances.
     const dexInstance = new web3.eth.Contract(dexABI, dexAddress);
@@ -34,12 +33,12 @@ async function simulateDEX() {
     for(let i=0; i<accounts.length; i++){
         let balA = await tokenA.methods.balanceOf(accounts[i]).call();
         if(balA > 0) continue;
-        await tokenA.methods.transfer(accounts[i], 1e18.toString()).send( {from: tokenADeployer} );
+        await tokenA.methods.transfer(accounts[i], 1e18.toString()).send( {from: tokenDeployer} );
     }
     for(let i=0; i<accounts.length; i++){
         let balB = await tokenB.methods.balanceOf(accounts[i]).call();
         if(balB > 0) continue;
-        await tokenB.methods.transfer(accounts[i], 1e18.toString()).send( {from: tokenBDeployer} );
+        await tokenB.methods.transfer(accounts[i], 1e18.toString()).send( {from: tokenDeployer} );
     }
     // for(let i=0; i<accounts.length; i++){
     //     let res = await tokenA.methods.balanceOf(accounts[i]).call();
@@ -63,14 +62,14 @@ async function simulateDEX() {
     // catch(e){
     //     console.log(`There was some error fetching balance: ${e}`);
     // }
-    const N = Math.floor(Math.random() * 50) + 50; // Number of transactions to simulate
-    // const N = 0;
+    // const N = Math.floor(Math.random() * 50) + 50; // Number of transactions to simulate
+    const N = 69;
 
     // 5. Start simulation loop.
     for (let i = 0; i < N; i++) {
       console.log(`\n--- Transaction ${i + 1} ---`);
       // Randomly choose an action type: 0 = deposit, 1 = withdraw, 2 = swap
-      let user = accounts[Math.floor(Math.random() * accounts.length)];
+      const user = accounts[Math.floor(Math.random() * accounts.length)];
       console.log(`Using ${user} account for this action.`);
       const actionType = Math.floor(Math.random() * 3);
 
@@ -88,7 +87,8 @@ async function simulateDEX() {
           // For the first deposit, choose arbitrary amounts.
           depositA = Math.floor(Math.random() * 101) + 50;
           depositB = Math.floor(Math.random() * 101) + 50;
-        } else {
+        }
+        else {
           // For subsequent deposits, preserve the ratio exactly:
           // depositA / depositB must equal reserveA / reserveB.
           // Try candidate depositA values until one yields an integer depositB.
@@ -110,14 +110,16 @@ async function simulateDEX() {
 
         // Approve token transfers and deposit.
         try {
-          await tokenA.methods.approve(dexAddress, depositA.toString()).send({ from: user });
-          await tokenB.methods.approve(dexAddress, depositB.toString()).send({ from: user });
-          await dexInstance.methods.depositLiquidity(depositA.toString(), depositB.toString()).send({ from: user });
+          await tokenA.methods.approve(dexAddress, depositA).send({ from: user });
+          await tokenB.methods.approve(dexAddress, depositB).send({ from: user });
+          await dexInstance.methods.depositLiquidity(depositA, depositB).send({ from: user });
           console.log(`Deposit: ${user} deposited ${depositA} TokenA and ${depositB} TokenB.`);
-        } catch (e) {
+        }
+        catch (e) {
           console.log(`Deposit failed: ${e.message}`);
         }
-      } else if (actionType === 1) {
+      }
+      else if (actionType === 1) {
         // Withdraw liquidity.
         console.log("Action Type: Withdraw liquidity");
 
@@ -140,13 +142,15 @@ async function simulateDEX() {
           try {
             await dexInstance.methods.withdrawLiquidity(withdrawAmount.toString()).send({ from: user });
             console.log(`Withdraw: ${user} withdrew ${withdrawAmount} LP tokens.`);
-          } catch (e) {
+          }
+          catch (e) {
             console.log(`Withdrawal failed: ${e.message}`);
           }
         } else {
           console.log("Withdrawal skipped: LP token balance is zero.");
         }
-      } else {
+      }
+      else {
         // Swap transaction.
         console.log("Action Type: Swap txn");
 
@@ -173,10 +177,12 @@ async function simulateDEX() {
             await tokenA.methods.approve(dexAddress, swapAmount.toString()).send({ from: user });
             await dexInstance.methods.swapTokenAForTokenB(swapAmount.toString()).send({ from: user });
             console.log(`Swap: ${user} swapped ${swapAmount} TokenA for TokenB.`);
-          } catch (e) {
+          }
+          catch (e) {
             console.log(`Swap (TokenA -> TokenB) failed: ${e.message}`);
           }
-        } else {
+        }
+        else {
           // Swap TokenB for TokenA.
           let balanceB = parseInt(await tokenB.methods.balanceOf(user).call());
           const maxSwap = Math.min(balanceB, Math.floor(reserveB * 0.1));
@@ -189,7 +195,8 @@ async function simulateDEX() {
             await tokenB.methods.approve(dexAddress, swapAmount.toString()).send({ from: user });
             await dexInstance.methods.swapTokenBForTokenA(swapAmount.toString()).send({ from: user });
             console.log(`Swap: ${user} swapped ${swapAmount} TokenB for TokenA.`);
-          } catch (e) {
+          }
+          catch (e) {
             console.log(`Swap (TokenB -> TokenA) failed: ${e.message}`);
           }
         }
@@ -201,13 +208,15 @@ async function simulateDEX() {
         const spotPrice = await dexInstance.methods.getSpotPriceAinB().call();
         console.log(`Current Pool Reserves: TokenA = ${reserves._reserveA}, TokenB = ${reserves._reserveB}`);
         console.log(`Spot Price (TokenA in terms of TokenB, scaled by 1e18): ${spotPrice}`);
-      } catch (e) {
+      }
+      catch (e) {
         console.log(`Error fetching pool metrics: ${e.message}`);
       }
     }
 
     console.log("\nDEX simulation complete.");
-  } catch (error) {
+  }
+  catch (error) {
     console.error("Error in simulation:", error);
   }
 }
