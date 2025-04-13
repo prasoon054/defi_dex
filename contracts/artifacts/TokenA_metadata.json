@@ -428,7 +428,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/Tokens.sol": "TokenA"
+			"contracts/Token.sol": "TokenA"
 		},
 		"evmVersion": "cancun",
 		"libraries": {},
@@ -451,11 +451,11 @@
 			]
 		},
 		"@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-			"keccak256": "0x6ef9389a2c07bc40d8a7ba48914724ab2c108fac391ce12314f01321813e6368",
+			"keccak256": "0x41f6b3b9e030561e7896dbef372b499cc8d418a80c3884a4d65a68f2fdc7493a",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://b7a5cb39b1e6df68f4dd9a5e76e853d745a74ffb3dfd7df4ae4d2ace6992a171",
-				"dweb:/ipfs/QmPbzKR19rdM8X3PLQjsmHRepUKhvoZnedSR63XyGtXZib"
+				"bzz-raw://80b0992a11b2fd1f75ced2971696d07bbd1d19ce6761dd50d8b6d48aa435f42a",
+				"dweb:/ipfs/QmZDe5xd2gXHjVEjv9t8C1KQ68K5T8qFwdinwQgmP3rF3x"
 			]
 		},
 		"@openzeppelin/contracts/token/ERC20/IERC20.sol": {
@@ -482,7 +482,7 @@
 				"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
 			]
 		},
-		"contracts/Tokens.sol": {
+		"contracts/Token.sol": {
 			"keccak256": "0x54ce30316a2967144896b59a2d80978d7d8eab27bccb3bd0cd3e94019b18ffa2",
 			"license": "MIT",
 			"urls": [

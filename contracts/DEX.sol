@@ -41,15 +41,16 @@ contract DEX {
         }
 
         // Transfer tokens from LP into this contract (user must approve beforehand)
-        require(tokenA.transferFrom(msg.sender, address(this), amountA), "DEX: Transfer of TokenA failed");
-        require(tokenB.transferFrom(msg.sender, address(this), amountB), "DEX: Transfer of TokenB failed");
+        tokenA.transferFrom(msg.sender, address(this), amountA);
+        tokenB.transferFrom(msg.sender, address(this), amountB);
 
         uint256 liquidity;
         uint256 totalSupply = lpToken.totalSupply();
         if (totalSupply == 0) {
             // For the first deposit, mint liquidity tokens based on the geometric mean.
             liquidity = sqrt(amountA * amountB);
-        } else {
+        }
+        else {
             // For subsequent deposits, mint LP tokens proportional to existing reserves.
             // Calculate liquidity tokens based on TokenA and TokenB deposits.
             uint256 liquidityA = (amountA * totalSupply) / reserveA;
@@ -160,7 +161,8 @@ contract DEX {
                 z = x;
                 x = (y / x + x) / 2;
             }
-        } else if (y != 0) {
+        }
+        else if (y != 0) {
             z = 1;
         }
     }
