@@ -40,30 +40,7 @@ async function simulateDEX() {
         if(balB > 0) continue;
         await tokenB.methods.transfer(accounts[i], 1e18.toString()).send( {from: tokenDeployer} );
     }
-    // for(let i=0; i<accounts.length; i++){
-    //     let res = await tokenA.methods.balanceOf(accounts[i]).call();
-    //     console.log(`Balance of Token A for ${accounts[i]} is: ${res}`);
-    // }
-    // for(let i=0; i<accounts.length; i++){
-    //     let res = await tokenB.methods.balanceOf(accounts[i]).call();
-    //     console.log(`Balance of Token B for ${accounts[i]} is: ${res}`);
-    // }
-    // try{
-    //     let res = await tokenA.methods.balanceOf(tokenADeployer).call();
-    //     console.log(`Balance of Token A for deployer is : ${res}`);
-    // }
-    // catch(e){
-    //     console.log(`There was some error fetching balance: ${e}`);
-    // }
-    // try{
-    //     let res = await tokenB.methods.balanceOf(tokenBDeployer).call();
-    //     console.log(`Balance of Token B for deployer is : ${res}`);
-    // }
-    // catch(e){
-    //     console.log(`There was some error fetching balance: ${e}`);
-    // }
-    // const N = Math.floor(Math.random() * 50) + 50; // Number of transactions to simulate
-    const N = 69;
+    const N = 69; // Number of transactions to simulate
 
     // 5. Start simulation loop.
     for (let i = 0; i < N; i++) {
@@ -89,22 +66,30 @@ async function simulateDEX() {
           depositB = Math.floor(Math.random() * 101) + 50;
         }
         else {
-          // For subsequent deposits, preserve the ratio exactly:
-          // depositA / depositB must equal reserveA / reserveB.
-          // Try candidate depositA values until one yields an integer depositB.
-          let foundCandidate = false;
-          for (let attempt = 0; attempt < 20; attempt++) {
-            let candidate = Math.floor(Math.random() * 20) + 1;
-            if ((candidate * reserveB) % reserveA === 0) {
-              depositA = candidate;
-              depositB = (candidate * reserveB) / reserveA;
-              foundCandidate = true;
-              break;
+          // Maintain reserve ratio exactly.
+          const useDivision = Math.random() < 0.6; // 60% chance to divide
+
+          if (useDivision) {
+            // Pick a random divisor (2 to 10)
+            let divisor = Math.floor(Math.random() * 9) + 2;
+
+            // Only divide if both reserves are divisible
+            if (reserveA % divisor === 0 && reserveB % divisor === 0) {
+              depositA = reserveA / divisor;
+              depositB = reserveB / divisor;
+            }
+            else {
+              // Fallback to safe multiplication
+              const scale = Math.floor(Math.random() * 5) + 1;
+              depositA = reserveA * scale;
+              depositB = reserveB * scale;
             }
           }
-          if (!foundCandidate) {
-            depositA = 1;
-            depositB = (1 * reserveB) % reserveA === 0 ? (1 * reserveB) / reserveA : 1;
+          else {
+            // Use multiplication with small scale to avoid overflow
+            const scale = Math.floor(Math.random() * 5) + 1;
+            depositA = reserveA * scale;
+            depositB = reserveB * scale;
           }
         }
 
@@ -133,6 +118,16 @@ async function simulateDEX() {
             name: "balanceOf",
             outputs: [{ name: "", type: "uint256" }],
             type: "function"
+          },
+          {
+            constant: false,
+            inputs: [
+              { name: "spender", type: "address" },
+              { name: "amount", type: "uint256" }
+            ],
+            name: "approve",
+            outputs: [{ name: "", type: "bool" }],
+            type: "function"
           }
         ];
         const lpToken = new web3.eth.Contract(lpTokenABI, lpTokenAddress);
@@ -140,13 +135,16 @@ async function simulateDEX() {
         if (lpBalance > 0) {
           const withdrawAmount = Math.floor(Math.random() * lpBalance) + 1;
           try {
+            await lpToken.methods.approve(dexAddress, withdrawAmount).send( { from: user } );
             await dexInstance.methods.withdrawLiquidity(withdrawAmount.toString()).send({ from: user });
             console.log(`Withdraw: ${user} withdrew ${withdrawAmount} LP tokens.`);
           }
           catch (e) {
             console.log(`Withdrawal failed: ${e.message}`);
           }
-        } else {
+          console.log(`Balance of LPToken for ${user} is ${lpBalance}`);
+        }
+        else {
           console.log("Withdrawal skipped: LP token balance is zero.");
         }
       }

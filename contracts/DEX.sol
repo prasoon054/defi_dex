@@ -37,12 +37,12 @@ contract DEX {
 
         // If liquidity already exists, enforce the deposit ratio equals the current pool ratio.
         if (reserveA > 0 || reserveB > 0) {
-            require(reserveA * amountB == reserveB * amountA, "DEX: Deposit must preserve pool ratio");
+            require(reserveA / reserveB == amountA / amountB, "DEX: Deposit must preserve pool ratio");
         }
 
         // Transfer tokens from LP into this contract (user must approve beforehand)
-        tokenA.transferFrom(msg.sender, address(this), amountA);
-        tokenB.transferFrom(msg.sender, address(this), amountB);
+        require(tokenA.transferFrom(msg.sender, address(this), amountA), "DEX: Transfer of TokenA failed");
+        require(tokenB.transferFrom(msg.sender, address(this), amountB), "DEX: Transfer of TokenB failed");
 
         uint256 liquidity;
         uint256 totalSupply = lpToken.totalSupply();
