@@ -1,32 +1,29 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract LPToken is ERC20 {
-    address public minter;
+    // The address that deployed the DEX is allowed to mint/burn LP tokens.
+    address public dex;
 
-    constructor() ERC20("LP Token", "LPT") {
-        // The deployer (initially) is the minter.
-        minter = msg.sender;
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
+        dex = msg.sender;
     }
 
-    modifier onlyMinter() {
-        require(msg.sender == minter, "LPToken: Not authorized");
-        _;
-    }
-
-    // Allow the minter to be updated (e.g., to the DEX contract).
-    function setMinter(address newMinter) external onlyMinter {
-        require(newMinter != address(0), "LPToken: Invalid address");
-        minter = newMinter;
-    }
-    
-    function mint(address account, uint256 amount) external onlyMinter {
+    /// @notice Mint LP tokens – callable only by the DEX contract.
+    /// @param account The recipient of the minted tokens.
+    /// @param amount The number of tokens to mint.
+    function mint(address account, uint256 amount) external {
+        require(msg.sender == dex, "LPToken: Only DEX can mint");
         _mint(account, amount);
     }
-    
-    function burn(address account, uint256 amount) external onlyMinter {
+
+    /// @notice Burn LP tokens – callable only by the DEX contract.
+    /// @param account The account whose tokens will be burned.
+    /// @param amount The number of tokens to burn.
+    function burnFrom(address account, uint256 amount) external {
+        require(msg.sender == dex, "LPToken: Only DEX can burn");
         _burn(account, amount);
     }
 }
