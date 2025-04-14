@@ -1,167 +1,166 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./LPToken.sol";
+/// Minimal interface for an ERC20 token.
+interface IERC20 {
+    function transfer(address recipient, uint256 amount) external returns (bool);
 
-contract DEX {
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function balanceOf(address account) external view returns (uint256);
+}
+
+/// Extended interface for the DEX contract with spot price functions.
+interface IDEX {
+    function swapTokenAForTokenB(uint256 amountAIn) external;
+    function swapTokenBForTokenA(uint256 amountBIn) external;
+    
+    // Functions to retrieve current spot prices.
+    function getSpotPriceAinB() external view returns (uint256);
+    function getSpotPriceBinA() external view returns (uint256);
+}
+
+/// @title Arbitrage Contract
+/// @notice Implements arbitrage between two DEXes in both directions (A→B→A and B→A→B).
+///         Before executing any swaps, it checks that the profit exceeds a minimum threshold
+///         using the DEX spot prices. If not, the transaction reverts with a descriptive error.
+///         Successful arbitrage execution is logged via events.
+contract Arbitrage {
+    // Addresses of the two DEX contracts.
+    address public dex1;
+    address public dex2;
+
+    // References to token contracts.
     IERC20 public tokenA;
     IERC20 public tokenB;
-    LPToken public lpToken;
 
-    // Internal reserve tracking for tokenA and tokenB
-    uint256 public reserveA;
-    uint256 public reserveB;
+    // --- Events ---
+    /// @notice Emitted when an A→B→A arbitrage execution is successful.
+    event ArbitrageExecutedAtoBtoA(address indexed trader, uint256 capital, uint256 profit);
+    /// @notice Emitted when a B→A→B arbitrage execution is successful.
+    event ArbitrageExecutedBtoAtoB(address indexed trader, uint256 capital, uint256 profit);
 
-    // Swap fee: 0.3% fee (using a fee factor of 997/1000)
-    uint256 private constant FEE_NUMERATOR = 997;
-    uint256 private constant FEE_DENOMINATOR = 1000;
-
-    /// @notice Initialize the DEX with the addresses of TokenA and TokenB.
-    /// @param _tokenA The address of TokenA.
-    /// @param _tokenB The address of TokenB.
-    constructor(address _tokenA, address _tokenB) {
+    /// @notice Constructor sets up the arbitrage contract.
+    /// @param _dex1 Address of the first DEX.
+    /// @param _dex2 Address of the second DEX.
+    /// @param _tokenA Address of TokenA.
+    /// @param _tokenB Address of TokenB.
+    constructor(
+        address _dex1,
+        address _dex2,
+        address _tokenA,
+        address _tokenB
+    ) {
+        dex1 = _dex1;
+        dex2 = _dex2;
         tokenA = IERC20(_tokenA);
         tokenB = IERC20(_tokenB);
-        // Deploy the LP token and store its instance.
-        lpToken = new LPToken("DEX LP Token", "DLP");
+
+        // Approve both DEX contracts to spend tokens on behalf of this contract.
+        // A very high approval value is used for simplicity.
+        tokenA.approve(dex1, type(uint256).max);
+        tokenB.approve(dex1, type(uint256).max);
+        tokenA.approve(dex2, type(uint256).max);
+        tokenB.approve(dex2, type(uint256).max);
     }
 
-    /// @notice Deposit liquidity into the pool.
-    /// @param amountA The amount of TokenA to deposit.
-    /// @param amountB The amount of TokenB to deposit.
-    /// Requirements:
-    /// - If the pool already has liquidity, deposits must preserve the current ratio.
-    function depositLiquidity(uint256 amountA, uint256 amountB) external {
-        require(amountA > 0 && amountB > 0, "DEX: Amounts must be greater than zero");
+    /// @notice Executes an arbitrage opportunity starting with TokenA.
+    ///         It simulates the expected return using spot price functions from both DEXes,
+    ///         and only proceeds if the expected profit meets or exceeds the `minProfit`.
+    /// @param amountAIn The amount of TokenA that the arbitrageur is willing to trade.
+    /// @param minProfit The minimum profit (in TokenA) required to execute the arbitrage.
+    /// @return finalA The total amount of TokenA returned (capital + profit).
+    /// @return profit The profit (in TokenA) earned from the arbitrage.
+    function arbitrageAtoBtoA(uint256 amountAIn, uint256 minProfit) external returns (uint256 finalA, uint256 profit) {
+        // Retrieve the spot prices from the two DEXes.
+        uint256 priceAinB_dex1 = IDEX(dex1).getSpotPriceAinB(); // TokenB per TokenA on DEX1, scaled by 1e18.
+        uint256 priceBinA_dex2 = IDEX(dex2).getSpotPriceBinA(); // TokenA per TokenB on DEX2, scaled by 1e18.
+        
+        // Calculate the expected amount of TokenA after the full round (scaled by 1e36):
+        // expectedFinalA = amountAIn * (priceAinB_dex1 * priceBinA_dex2) / 1e36.
+        uint256 expectedFinalA = (amountAIn * (priceAinB_dex1 * priceBinA_dex2)) / 1e36;
 
-        // If liquidity already exists, enforce the deposit ratio equals the current pool ratio.
-        if (reserveA > 0 || reserveB > 0) {
-            require(reserveA * amountB == reserveB * amountA, "DEX: Deposit must preserve pool ratio");
-        }
+        // Check that the simulated outcome is profitable.
+        require(expectedFinalA > amountAIn, "Arbitrage: No profitable opportunity based on spot prices");
+        require(expectedFinalA - amountAIn >= minProfit, "Arbitrage: Expected profit does not meet minimum threshold");
 
-        // Transfer tokens from LP into this contract (user must approve beforehand)
-        require(tokenA.transferFrom(msg.sender, address(this), amountA), "DEX: Transfer of TokenA failed");
-        require(tokenB.transferFrom(msg.sender, address(this), amountB), "DEX: Transfer of TokenB failed");
+        // Pull TokenA from the arbitrageur.
+        // (This requires that the arbitrageur has approved this contract to spend their TokenA.)
+        require(tokenA.transferFrom(msg.sender, address(this), amountAIn), "Arbitrage: Transfer of TokenA failed");
 
-        uint256 liquidity;
-        uint256 totalSupply = lpToken.totalSupply();
-        if (totalSupply == 0) {
-            // For the first deposit, mint liquidity tokens based on the geometric mean.
-            liquidity = sqrt(amountA * amountB);
-        } else {
-            // For subsequent deposits, mint LP tokens proportional to existing reserves.
-            // Calculate liquidity tokens based on TokenA and TokenB deposits.
-            uint256 liquidityA = (amountA * totalSupply) / reserveA;
-            uint256 liquidityB = (amountB * totalSupply) / reserveB;
-            // Here we expect both calculations to result in the same amount if the ratio is preserved.
-            require(liquidityA == liquidityB, "DEX: Liquidity calculations mismatch");
-            liquidity = liquidityA;
-        }
-        require(liquidity > 0, "DEX: Insufficient liquidity minted");
+        // Execute the first swap on DEX1: TokenA for TokenB.
+        IDEX(dex1).swapTokenAForTokenB(amountAIn);
+        
+        // Get the TokenB balance after the swap.
+        uint256 tokenBBalance = tokenB.balanceOf(address(this));
+        require(tokenBBalance > 0, "Arbitrage: Swap on DEX1 did not return TokenB");
 
-        // Mint LP tokens to the liquidity provider.
-        lpToken.mint(msg.sender, liquidity);
+        // Execute the second swap on DEX2: TokenB back to TokenA.
+        IDEX(dex2).swapTokenBForTokenA(tokenBBalance);
+        
+        // Check the final TokenA balance.
+        finalA = tokenA.balanceOf(address(this));
+        require(finalA > amountAIn, "Arbitrage: No profit made in A->B->A direction");
 
-        // Update the pool’s reserves.
-        reserveA += amountA;
-        reserveB += amountB;
+        profit = finalA - amountAIn;
+        require(profit >= minProfit, "Arbitrage: Profit does not meet minimum threshold");
+
+        // Transfer the total TokenA (capital + profit) back to the arbitrageur.
+        require(tokenA.transfer(msg.sender, finalA), "Arbitrage: Transfer of TokenA back failed");
+
+        // Emit an event to log successful arbitrage execution.
+        emit ArbitrageExecutedAtoBtoA(msg.sender, amountAIn, profit);
     }
 
-    /// @notice Withdraw liquidity from the pool.
-    /// @param lpAmount The amount of LP tokens to redeem.
-    function withdrawLiquidity(uint256 lpAmount) external {
-        require(lpAmount > 0, "DEX: LP amount must be greater than zero");
-        uint256 totalSupply = lpToken.totalSupply();
-        require(totalSupply > 0, "DEX: No liquidity available");
+    /// @notice Executes an arbitrage opportunity starting with TokenB.
+    ///         It simulates the expected return using the current spot prices from the two DEXes and
+    ///         proceeds only if the simulated profit meets or exceeds the `minProfit`.
+    /// @param amountBIn The amount of TokenB that the arbitrageur is willing to trade.
+    /// @param minProfit The minimum profit (in TokenB) required to execute the arbitrage.
+    /// @return finalB The total amount of TokenB returned (capital + profit).
+    /// @return profit The profit (in TokenB) earned from the arbitrage.
+    function arbitrageBtoAtoB(uint256 amountBIn, uint256 minProfit) external returns (uint256 finalB, uint256 profit) {
+        // Retrieve the spot prices from the two DEXes.
+        uint256 priceBinA_dex2 = IDEX(dex2).getSpotPriceBinA(); // TokenA per TokenB on DEX2, scaled by 1e18.
+        uint256 priceAinB_dex1 = IDEX(dex1).getSpotPriceAinB();  // TokenB per TokenA on DEX1, scaled by 1e18.
+        
+        // Calculate the expected amount of TokenB after swapping:
+        // expectedFinalB = amountBIn * (priceBinA_dex2 * priceAinB_dex1) / 1e36.
+        uint256 expectedFinalB = (amountBIn * (priceBinA_dex2 * priceAinB_dex1)) / 1e36;
+        require(expectedFinalB > amountBIn, "Arbitrage: No profitable opportunity based on spot prices");
+        require(expectedFinalB - amountBIn >= minProfit, "Arbitrage: Expected profit does not meet minimum threshold");
 
-        // Calculate amounts to return proportionally from the reserves.
-        uint256 amountA = (lpAmount * reserveA) / totalSupply;
-        uint256 amountB = (lpAmount * reserveB) / totalSupply;
-        require(amountA > 0 && amountB > 0, "DEX: Withdraw amounts are zero");
+        // Pull TokenB from the arbitrageur.
+        require(tokenB.transferFrom(msg.sender, address(this), amountBIn), "Arbitrage: Transfer of TokenB failed");
 
-        // Burn the LP tokens from the user.
-        lpToken.burnFrom(msg.sender, lpAmount);
+        // Execute the first swap on DEX2: TokenB for TokenA.
+        IDEX(dex2).swapTokenBForTokenA(amountBIn);
 
-        // Update reserves.
-        reserveA -= amountA;
-        reserveB -= amountB;
+        // Get the TokenA balance after the swap.
+        uint256 tokenABalance = tokenA.balanceOf(address(this));
+        require(tokenABalance > 0, "Arbitrage: Swap on DEX2 did not return TokenA");
 
-        // Transfer tokens back to the user. Removed require 
-        tokenA.transfer(msg.sender, amountA);
-        tokenB.transfer(msg.sender, amountB);
-    }
+        // Execute the second swap on DEX1: TokenA back to TokenB.
+        IDEX(dex1).swapTokenAForTokenB(tokenABalance);
 
-    /// @notice Swap an exact amount of TokenA for as many TokenB as possible.
-    /// @param amountAIn The amount of TokenA the trader is swapping.
-    function swapTokenAForTokenB(uint256 amountAIn) external {
-        require(amountAIn > 0, "DEX: Input amount must be greater than zero");
-        require(tokenA.transferFrom(msg.sender, address(this), amountAIn), "DEX: Transfer of TokenA failed");
+        // Check the final TokenB balance.
+        finalB = tokenB.balanceOf(address(this));
+        require(finalB > amountBIn, "Arbitrage: No profit made in B->A->B direction");
 
-        // Apply fee on input.
-        uint256 amountInWithFee = (amountAIn * FEE_NUMERATOR) / FEE_DENOMINATOR;
-        // Calculate TokenB output using the constant product formula.
-        // Formula: amountBOut = (amountInWithFee * reserveB) / (reserveA + amountInWithFee)
-        uint256 numerator = amountInWithFee * reserveB;
-        uint256 denominator = reserveA + amountInWithFee;
-        uint256 amountBOut = numerator / denominator;
-        require(amountBOut > 0, "DEX: Insufficient output amount");
+        profit = finalB - amountBIn;
+        require(profit >= minProfit, "Arbitrage: Profit does not meet minimum threshold");
 
-        // Update reserves; note that the fee remains in the pool.
-        reserveA += amountAIn;
-        reserveB -= amountBOut;
+        // Transfer the total TokenB (capital + profit) back to the arbitrageur.
+        require(tokenB.transfer(msg.sender, finalB), "Arbitrage: Transfer of TokenB back failed");
 
-        require(tokenB.transfer(msg.sender, amountBOut), "DEX: Transfer of TokenB failed");
-    }
-
-    /// @notice Swap an exact amount of TokenB for as many TokenA as possible.
-    /// @param amountBIn The amount of TokenB the trader is swapping.
-    function swapTokenBForTokenA(uint256 amountBIn) external {
-        require(amountBIn > 0, "DEX: Input amount must be greater than zero");
-        require(tokenB.transferFrom(msg.sender, address(this), amountBIn), "DEX: Transfer of TokenB failed");
-
-        uint256 amountInWithFee = (amountBIn * FEE_NUMERATOR) / FEE_DENOMINATOR;
-        uint256 numerator = amountInWithFee * reserveA;
-        uint256 denominator = reserveB + amountInWithFee;
-        uint256 amountAOut = numerator / denominator;
-        require(amountAOut > 0, "DEX: Insufficient output amount");
-
-        reserveB += amountBIn;
-        reserveA -= amountAOut;
-
-        require(tokenA.transfer(msg.sender, amountAOut), "DEX: Transfer of TokenA failed");
-    }
-
-    /// @notice Returns the spot price of TokenA in terms of TokenB.
-    /// @return The price scaled by 1e18.
-    function getSpotPriceAinB() external view returns (uint256) {
-        require(reserveA > 0, "DEX: No TokenA reserve");
-        return (reserveB * 1e18) / reserveA;
-    }
-
-    /// @notice Returns the spot price of TokenB in terms of TokenA.
-    /// @return The price scaled by 1e18.
-    function getSpotPriceBinA() external view returns (uint256) {
-        require(reserveB > 0, "DEX: No TokenB reserve");
-        return (reserveA * 1e18) / reserveB;
-    }
-
-    /// @notice Returns the current reserves of TokenA and TokenB in the pool.
-    function getReserves() external view returns (uint256 _reserveA, uint256 _reserveB) {
-        return (reserveA, reserveB);
-    }
-
-    /// @dev Internal function: computes the square root of y using the Babylonian method.
-    function sqrt(uint256 y) internal pure returns (uint256 z) {
-        if (y > 3) {
-            z = y;
-            uint256 x = y / 2 + 1;
-            while (x < z) {
-                z = x;
-                x = (y / x + x) / 2;
-            }
-        } else if (y != 0) {
-            z = 1;
-        }
+        // Emit an event to log successful arbitrage execution.
+        emit ArbitrageExecutedBtoAtoB(msg.sender, amountBIn, profit);
     }
 }
+
