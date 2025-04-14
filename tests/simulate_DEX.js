@@ -37,7 +37,7 @@ async function simulateDEX() {
       await tokenA.methods.transfer(user, 1e18.toString()).send( {from: tokenDeployer } );
       await tokenB.methods.transfer(user, 1e18.toString()).send( {from: tokenDeployer } );
     }
-    const N = 69; // Number of transactions to simulate
+    const N = 100; // Number of transactions to simulate
     const metrics = [];
     let cumulativeVolumeA = 0;
     let cumulativeVolumeB = 0;
@@ -149,7 +149,7 @@ async function simulateDEX() {
           const withdrawAmount = Math.floor(Math.random() * lpBalance) + 1;
           try {
             await lpToken.methods.approve(dexAddress, withdrawAmount).send( { from: user } );
-            await dexInstance.methods.withdrawLiquidity(withdrawAmount.toString()).send({ from: user });
+            await dexInstance.methods.withdrawLiquidity(withdrawAmount).send({ from: user });
             console.log(`Withdraw: ${user} withdrew ${withdrawAmount} LP tokens.`);
           }
           catch (e) {
@@ -183,20 +183,24 @@ async function simulateDEX() {
             continue;
           }
           const swapAmount = Math.floor(Math.random() * maxSwap) + 1;
-          const expectedPrice = parseInt(await dexInstance.methods.getSpotPriceAinB().call()) / 1e18;
+          const expectedPrice = parseInt(await dexInstance.methods.getSpotPriceAinB().call());
           const beforeB = parseInt(await tokenB.methods.balanceOf(user).call());
+          console.log(`Before B: ${beforeB}`);
           try {
-            await tokenA.methods.approve(dexAddress, swapAmount.toString()).send({ from: user });
-            await dexInstance.methods.swapTokenAForTokenB(swapAmount.toString()).send({ from: user });
+            await tokenA.methods.approve(dexAddress, swapAmount).send({ from: user });
+            await dexInstance.methods.swapTokenAForTokenB(swapAmount).send({ from: user });
             console.log(`Swap: ${user} swapped ${swapAmount} TokenA for TokenB.`);
           }
           catch (e) {
             console.log(`Swap (TokenA -> TokenB) failed: ${e.message}`);
           }
           const afterB = parseInt(await tokenB.methods.balanceOf(user).call());
+          console.log(`After B: ${afterB}`);
           const received = afterB - beforeB;
-          const actualPrice = received / swapAmount;
-          slippage = ((actualPrice - expectedPrice) / expectedPrice) * 100;
+          console.log(received);
+          console.log(expectedPrice);
+          const actualPrice = (received * 1e18) / swapAmount;
+          slippage = ((actualPrice - expectedPrice) / expectedPrice) * 1e-16;
           cumulativeVolumeA += swapAmount;
           cumulativeFees += swapAmount * 0.003;
         }
@@ -209,19 +213,23 @@ async function simulateDEX() {
             continue;
           }
           const swapAmount = Math.floor(Math.random() * maxSwap) + 1;
-          const expectedPrice = parseInt(await dexInstance.methods.getSpotPriceBinA().call()) / 1e18;
+          const expectedPrice = parseInt(await dexInstance.methods.getSpotPriceBinA().call());
           const beforeA = parseInt(await tokenA.methods.balanceOf(user).call());
+          console.log(`Before A: ${beforeA}`);
           try {
-            await tokenB.methods.approve(dexAddress, swapAmount.toString()).send({ from: user });
-            await dexInstance.methods.swapTokenBForTokenA(swapAmount.toString()).send({ from: user });
+            await tokenB.methods.approve(dexAddress, swapAmount).send({ from: user });
+            await dexInstance.methods.swapTokenBForTokenA(swapAmount).send({ from: user });
             console.log(`Swap: ${user} swapped ${swapAmount} TokenB for TokenA.`);
           }
           catch (e) {
             console.log(`Swap (TokenB -> TokenA) failed: ${e.message}`);
           }
           const afterA = parseInt(await tokenA.methods.balanceOf(user).call());
+          console.log(`After A: ${afterA}`);
           const received = afterA - beforeA;
-          const actualPrice = received / swapAmount;
+          console.log(received);
+          console.log(expectedPrice);
+          const actualPrice = (received * 1e18) / swapAmount;
           slippage = ((actualPrice - expectedPrice) / expectedPrice) * 100;
           cumulativeVolumeB += swapAmount;
           cumulativeFees += swapAmount * 0.003;
