@@ -37,6 +37,8 @@ async function simulateDEX() {
       await tokenA.methods.transfer(user, 1e18.toString()).send( {from: tokenDeployer } );
       await tokenB.methods.transfer(user, 1e18.toString()).send( {from: tokenDeployer } );
     }
+    await tokenA.methods.transfer(dexAddress, 1e18.toString()).send( {from: tokenDeployer} );
+    await tokenB.methods.transfer(dexAddress, 1e18.toString()).send( {from: tokenDeployer} );
     const N = 100; // Number of transactions to simulate
     const metrics = [];
     let cumulativeVolumeA = 0;
@@ -200,7 +202,8 @@ async function simulateDEX() {
           console.log(received);
           console.log(expectedPrice);
           const actualPrice = (received * 1e18) / swapAmount;
-          slippage = ((actualPrice - expectedPrice) / expectedPrice) * 1e-16;
+          if(received === 0) slippage = 0;
+          else slippage = ((actualPrice - expectedPrice) / expectedPrice) * 1e-16;
           cumulativeVolumeA += swapAmount;
           cumulativeFees += swapAmount * 0.003;
         }
@@ -215,7 +218,6 @@ async function simulateDEX() {
           const swapAmount = Math.floor(Math.random() * maxSwap) + 1;
           const expectedPrice = parseInt(await dexInstance.methods.getSpotPriceBinA().call());
           const beforeA = parseInt(await tokenA.methods.balanceOf(user).call());
-          console.log(`Before A: ${beforeA}`);
           try {
             await tokenB.methods.approve(dexAddress, swapAmount).send({ from: user });
             await dexInstance.methods.swapTokenBForTokenA(swapAmount).send({ from: user });
@@ -225,12 +227,10 @@ async function simulateDEX() {
             console.log(`Swap (TokenB -> TokenA) failed: ${e.message}`);
           }
           const afterA = parseInt(await tokenA.methods.balanceOf(user).call());
-          console.log(`After A: ${afterA}`);
           const received = afterA - beforeA;
-          console.log(received);
-          console.log(expectedPrice);
           const actualPrice = (received * 1e18) / swapAmount;
-          slippage = ((actualPrice - expectedPrice) / expectedPrice) * 100;
+          if(received === 0) slippage = 0;
+          else slippage = ((actualPrice - expectedPrice) / expectedPrice) * 100;
           cumulativeVolumeB += swapAmount;
           cumulativeFees += swapAmount * 0.003;
         }
