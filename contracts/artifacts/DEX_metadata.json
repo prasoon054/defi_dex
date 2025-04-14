@@ -319,11 +319,11 @@
 			]
 		},
 		"contracts/DEX.sol": {
-			"keccak256": "0x89422dadaff63642fc2aad5c63539e5222e3865dae609675fc97b7105f7ac9f6",
+			"keccak256": "0x9ab2216f182ddefb23cd4568a5fe32fad78198fc3ceee9104a5a013358fe8b2b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://5cb3bfacabb3df6b0fa9a06faeff2faecb08a576104c6222c468e40cf614913e",
-				"dweb:/ipfs/QmVwqyXA45bYUFcZYZ3MU9NdLN9jND2TAS44Wbrfk4pfZk"
+				"bzz-raw://abe4c194d096c0cee3996c6fea31356cfa604972ac16e3edf698b0baab785256",
+				"dweb:/ipfs/QmawHBvimw1nPHCrgEfLvz6smJzWVC7VkbwpYEeYkVjYYU"
 			]
 		},
 		"contracts/LPToken.sol": {
