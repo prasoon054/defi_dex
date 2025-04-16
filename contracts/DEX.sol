@@ -37,7 +37,7 @@ contract DEX {
 
         // If liquidity already exists, enforce the deposit ratio equals the current pool ratio.
         if (reserveA > 0 || reserveB > 0) {
-            require(reserveA / reserveB == amountA / amountB, "DEX: Deposit must preserve pool ratio");
+            require(reserveA * amountB == amountA * reserveB, "DEX: Deposit must preserve pool ratio");
         }
 
         // Transfer tokens from LP into this contract (user must approve beforehand)

@@ -28,11 +28,11 @@ async function simulateArbitrage() {
     // -------------------------------------------------------------------------
     // Step 1: Load contract artifacts
     // -------------------------------------------------------------------------
-    const dexArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'DEFI_DEX/artifacts/DEX.json'));
-    const tokenArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'DEFI_DEX/artifacts/TokenA.json'));
+    const dexArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'contracts/artifacts/DEX.json'));
+    const tokenArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'contracts/artifacts/TokenA.json'));
     // TokenA and TokenB use the same source file (Token.sol) but are deployed separately.
-    const tokenBArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'DEFI_DEX/artifacts/TokenB.json'));
-    const arbitrageArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'DEFI_DEX/artifacts/Arbitrage.json'));
+    const tokenBArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'contracts/artifacts/TokenB.json'));
+    const arbitrageArtifact = JSON.parse(await remix.call('fileManager', 'getFile', 'contracts/artifacts/Arbitrage.json'));
     
     if (!dexArtifact || !tokenArtifact || !tokenBArtifact || !arbitrageArtifact) {
       throw new Error("One or more contract artifacts could not be loaded. Please compile your contracts first.");

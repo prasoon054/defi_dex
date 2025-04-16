@@ -214,7 +214,7 @@ async function simulateDEX() {
           const swapAmount = Math.floor(Math.random() * maxSwap) + 1;
           const expectedPrice = parseInt(await dexInstance.methods.getSpotPriceAinB().call());
           const beforeB = parseInt(await tokenB.methods.balanceOf(user).call());
-          console.log(`Before B: ${beforeB}`);
+          // console.log(`Before B: ${beforeB}`);
           try {
             await tokenA.methods.approve(dexAddress, swapAmount).send({ from: user });
             await dexInstance.methods.swapTokenAForTokenB(swapAmount).send({ from: user });
@@ -224,13 +224,13 @@ async function simulateDEX() {
             console.log(`Swap (TokenA -> TokenB) failed: ${e.message}`);
           }
           const afterB = parseInt(await tokenB.methods.balanceOf(user).call());
-          console.log(`After B: ${afterB}`);
+          // console.log(`After B: ${afterB}`);
           const received = afterB - beforeB;
-          console.log(received);
-          console.log(expectedPrice);
+          // console.log(received);
+          // console.log(expectedPrice);
           const actualPrice = (received * 1e18) / swapAmount;
           if(received === 0) slippage = 0;
-          else slippage = ((actualPrice - expectedPrice) / expectedPrice) * 1e-16;
+          else slippage = ((actualPrice - expectedPrice) / expectedPrice) * 100;
           cumulativeVolumeA += swapAmount;
           cumulativeFees += swapAmount * 0.003;
         }
