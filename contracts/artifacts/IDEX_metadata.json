@@ -1,0 +1,133 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"name": "getReserves",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "reserveA",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "reserveB",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getSpotPriceAinB",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getSpotPriceBinA",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amountAIn",
+						"type": "uint256"
+					}
+				],
+				"name": "swapTokenAForTokenB",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amountBIn",
+						"type": "uint256"
+					}
+				],
+				"name": "swapTokenBForTokenA",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"getReserves()": {
+					"notice": "Returns the current reserves of TokenA and TokenB held by the DEX. These values are needed for simulating swaps correctly."
+				},
+				"getSpotPriceAinB()": {
+					"notice": "Returns the spot price for swapping TokenA to TokenB. Note: This function might be used for quick estimates but the simulation below uses actual reserves."
+				},
+				"getSpotPriceBinA()": {
+					"notice": "Returns the spot price for swapping TokenB to TokenA."
+				},
+				"swapTokenAForTokenB(uint256)": {
+					"notice": "Swaps TokenA for TokenB."
+				},
+				"swapTokenBForTokenA(uint256)": {
+					"notice": "Swaps TokenB for TokenA."
+				}
+			},
+			"notice": "Extended interface for the DEX contract with reserve and swap functions.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/Arbitrage.sol": "IDEX"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/Arbitrage.sol": {
+			"keccak256": "0xf37a72a83a9ac986e3c0e3deb70bf66265a27e969c8fe1d4d4875b9ebf0a050f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://2f25dc7c1d7ddba5ae0c201f112bc4e168de4eaecb6663c9f4dbc6d20f094ed7",
+				"dweb:/ipfs/QmWgufU7t6UUxtBbrW3chW7SbALyg8hxGpsuXL7Z3Z5v33"
+			]
+		}
+	},
+	"version": 1
+}

@@ -1,0 +1,315 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_dex1",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_dex2",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_tokenA",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_tokenB",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "trader",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "capital",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "profit",
+						"type": "uint256"
+					}
+				],
+				"name": "ArbitrageExecutedAtoBtoA",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "trader",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "capital",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "profit",
+						"type": "uint256"
+					}
+				],
+				"name": "ArbitrageExecutedBtoAtoB",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amountAIn",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minProfit",
+						"type": "uint256"
+					}
+				],
+				"name": "arbitrageAtoBtoA",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "finalA",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "profit",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amountBIn",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minProfit",
+						"type": "uint256"
+					}
+				],
+				"name": "arbitrageBtoAtoB",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "finalB",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "profit",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "dex1",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "dex2",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "amountIn",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "reserveIn",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "reserveOut",
+						"type": "uint256"
+					}
+				],
+				"name": "getAmountOut",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "amountOut",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "tokenA",
+				"outputs": [
+					{
+						"internalType": "contract IERC20",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "tokenB",
+				"outputs": [
+					{
+						"internalType": "contract IERC20",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"arbitrageAtoBtoA(uint256,uint256)": {
+					"params": {
+						"amountAIn": "The amount of TokenA that the arbitrageur is willing to trade.",
+						"minProfit": "The minimum profit (in TokenA) required to execute the arbitrage."
+					},
+					"returns": {
+						"finalA": "The total amount of TokenA returned (capital + profit).",
+						"profit": "The profit (in TokenA) earned from the arbitrage."
+					}
+				},
+				"arbitrageBtoAtoB(uint256,uint256)": {
+					"params": {
+						"amountBIn": "The amount of TokenB that the arbitrageur is willing to trade.",
+						"minProfit": "The minimum profit (in TokenB) required to execute the arbitrage."
+					},
+					"returns": {
+						"finalB": "The total amount of TokenB returned (capital + profit).",
+						"profit": "The profit (in TokenB) earned from the arbitrage."
+					}
+				},
+				"constructor": {
+					"params": {
+						"_dex1": "Address of the first DEX.",
+						"_dex2": "Address of the second DEX.",
+						"_tokenA": "Address of TokenA.",
+						"_tokenB": "Address of TokenB."
+					}
+				},
+				"getAmountOut(uint256,uint256,uint256)": {
+					"params": {
+						"amountIn": "The amount being swapped.",
+						"reserveIn": "The reserve amount for the input token.",
+						"reserveOut": "The reserve amount for the output token."
+					},
+					"returns": {
+						"amountOut": "The simulated amount received after the swap."
+					}
+				}
+			},
+			"title": "Arbitrage Contract",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"arbitrageAtoBtoA(uint256,uint256)": {
+					"notice": "Executes an arbitrage opportunity starting with TokenA using route A→B→A.         It simulates the expected return by reading reserves from both DEXes using the constant product formula.         The swap is only executed if the simulation indicates that the expected profit meets or exceeds `minProfit`."
+				},
+				"arbitrageBtoAtoB(uint256,uint256)": {
+					"notice": "Executes an arbitrage opportunity starting with TokenB using route B→A→B.         It simulates the expected return by reading reserves from both DEXes using the constant product formula.         The swap is only executed if the simulation indicates that the expected profit meets or exceeds `minProfit`."
+				},
+				"constructor": {
+					"notice": "Constructor sets up the arbitrage contract."
+				},
+				"getAmountOut(uint256,uint256,uint256)": {
+					"notice": "Helper function that simulates a swap using the constant product formula with fee."
+				}
+			},
+			"notice": "Implements arbitrage between two DEXes in both directions (A→B→A and B→A→B).         Before executing any swaps, it checks that the simulated profit (using the constant-product formula         with fees) exceeds a given minimum threshold. If not, the transaction reverts with a descriptive error.         Successful arbitrage execution is logged via events.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/Arbitrage.sol": "Arbitrage"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/Arbitrage.sol": {
+			"keccak256": "0xf37a72a83a9ac986e3c0e3deb70bf66265a27e969c8fe1d4d4875b9ebf0a050f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://2f25dc7c1d7ddba5ae0c201f112bc4e168de4eaecb6663c9f4dbc6d20f094ed7",
+				"dweb:/ipfs/QmWgufU7t6UUxtBbrW3chW7SbALyg8hxGpsuXL7Z3Z5v33"
+			]
+		}
+	},
+	"version": 1
+}
