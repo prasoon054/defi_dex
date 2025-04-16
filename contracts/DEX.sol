@@ -88,9 +88,9 @@ contract DEX {
         reserveA -= amountA;
         reserveB -= amountB;
 
-        // Transfer tokens back to the user.
-        require(tokenA.transfer(msg.sender, amountA), "DEX: Transfer of TokenA failed");
-        require(tokenB.transfer(msg.sender, amountB), "DEX: Transfer of TokenB failed");
+        // Transfer tokens back to the user. Removed require 
+        tokenA.transfer(msg.sender, amountA);
+        tokenB.transfer(msg.sender, amountB);
     }
 
     /// @notice Swap an exact amount of TokenA for as many TokenB as possible.
