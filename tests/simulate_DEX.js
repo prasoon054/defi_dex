@@ -39,7 +39,7 @@ async function simulateDEX() {
     }
     await tokenA.methods.transfer(dexAddress, 1e18.toString()).send( {from: tokenDeployer} );
     await tokenB.methods.transfer(dexAddress, 1e18.toString()).send( {from: tokenDeployer} );
-    const N = 100; // Number of transactions to simulate
+    const N = 80; // Number of transactions to simulate
     const metrics = [];
     let cumulativeVolumeA = 0;
     let cumulativeVolumeB = 0;
@@ -78,33 +78,60 @@ async function simulateDEX() {
         }
         else {
           // Maintain reserve ratio exactly.
-          const useDivision = Math.random() < 0.6; // 60% chance to divide
-          let divided = false;
-          if (useDivision) {
-            // Pick a random divisor (2 to 10)
+          // const useDivision = Math.random() < 0.6; // 60% chance to divide
+          // let divided = false;
+          // if (useDivision) {
+          //   // Pick a random divisor (2 to 10)
+          //   const primeBelow20 = [2, 3, 5, 7, 11, 13, 17, 19];
+          //   for (let i = 0; i < primeBelow20.length; i++) {
+          //     let divisor = primeBelow20[i];
+          //     // Only divide if both reserves are divisible
+          //     if (reserveA % divisor === 0 && reserveB % divisor === 0) {
+          //       depositA = reserveA / divisor;
+          //       depositB = reserveB / divisor;
+          //       divided = true;
+          //       break;
+          //     }
+          //   }
+          //   if (!divided) {
+          //     // Fallback to safe multiplication
+          //     const scale = Math.floor(Math.random() * 5) + 1;
+          //     depositA = reserveA * scale;
+          //     depositB = reserveB * scale;
+          //   }
+          // }
+          // else {
+          //   // Use multiplication with small scale to avoid overflow
+          //   const scale = Math.floor(Math.random() * 5) + 1;
+          //   depositA = reserveA * scale;
+          //   depositB = reserveB * scale;
+          // }
+          let foundCandidate = false;
+          for (let attempt = 0; attempt < 20; attempt++) {
+            let candidate = Math.floor(Math.random() * 20) + 1;
+            if ((candidate * reserveB) % reserveA == 0){
+              depositA = candidate;
+              depositB = (candidate * reserveB) / reserveA;
+              foundCandidate = true;
+              break;
+            }
+          }
+          if(!foundCandidate) {
+            let divided = false;
             const primeBelow20 = [2, 3, 5, 7, 11, 13, 17, 19];
-            for (let i = 0; i < primeBelow20.length; i++) {
+            for (let i = primeBelow20.length-1; i >= 0; i--){
               let divisor = primeBelow20[i];
-              // Only divide if both reserves are divisible
-              if (reserveA % divisor === 0 && reserveB % divisor === 0) {
-                depositA = reserveA / divisor;
-                depositB = reserveB / divisor;
+              if(reserveA%divisor == 0 && reserveB%divisor == 0){
+                depositA = reserveA/divisor;
+                depositB = reserveB/divisor;
                 divided = true;
                 break;
               }
             }
-            if (!divided) {
-              // Fallback to safe multiplication
-              const scale = Math.floor(Math.random() * 5) + 1;
-              depositA = reserveA * scale;
-              depositB = reserveB * scale;
+            if(!divided){
+              depositA = reserveA;
+              depositB = reserveB;
             }
-          }
-          else {
-            // Use multiplication with small scale to avoid overflow
-            const scale = Math.floor(Math.random() * 5) + 1;
-            depositA = reserveA * scale;
-            depositB = reserveB * scale;
           }
         }
 
