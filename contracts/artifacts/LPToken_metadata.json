@@ -8,9 +8,14 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "initialSupply",
-						"type": "uint256"
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "symbol",
+						"type": "string"
 					}
 				],
 				"stateMutability": "nonpayable",
@@ -220,6 +225,24 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "burnFrom",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "decimals",
 				"outputs": [
@@ -230,6 +253,37 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "dex",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "mint",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -399,8 +453,20 @@
 				"balanceOf(address)": {
 					"details": "See {IERC20-balanceOf}."
 				},
+				"burnFrom(address,uint256)": {
+					"params": {
+						"account": "The account whose tokens will be burned.",
+						"amount": "The number of tokens to burn."
+					}
+				},
 				"decimals()": {
 					"details": "Returns the number of decimals used to get its user representation. For example, if `decimals` equals `2`, a balance of `505` tokens should be displayed to a user as `5.05` (`505 / 10 ** 2`). Tokens usually opt for a value of 18, imitating the relationship between Ether and Wei. This is the default value returned by this function, unless it's overridden. NOTE: This information is only used for _display_ purposes: it in no way affects any of the arithmetic of the contract, including {IERC20-balanceOf} and {IERC20-transfer}."
+				},
+				"mint(address,uint256)": {
+					"params": {
+						"account": "The recipient of the minted tokens.",
+						"amount": "The number of tokens to mint."
+					}
 				},
 				"name()": {
 					"details": "Returns the name of the token."
@@ -422,13 +488,20 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {},
+			"methods": {
+				"burnFrom(address,uint256)": {
+					"notice": "Burn LP tokens – callable only by the DEX contract."
+				},
+				"mint(address,uint256)": {
+					"notice": "Mint LP tokens – callable only by the DEX contract."
+				}
+			},
 			"version": 1
 		}
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/Token.sol": "TokenB"
+			"contracts/LPToken.sol": "LPToken"
 		},
 		"evmVersion": "cancun",
 		"libraries": {},
@@ -482,12 +555,12 @@
 				"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
 			]
 		},
-		"contracts/Token.sol": {
-			"keccak256": "0x54ce30316a2967144896b59a2d80978d7d8eab27bccb3bd0cd3e94019b18ffa2",
+		"contracts/LPToken.sol": {
+			"keccak256": "0x5975b36ec744671e9a574cc34fe8dcb9625fe32709d01c1db29ebc07c138f2db",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://ed430d36d7cb1743e6994845900a88362445d89dcad77fac54c0b5860747a168",
-				"dweb:/ipfs/QmY9EeZkBzaK9qekrR4Y35b9mo9gJLNbT8q3mdNTozGeTG"
+				"bzz-raw://32c240fbe3a256f2f1181686079181738f1a81ed6be8a246b2bd4c0726491800",
+				"dweb:/ipfs/QmdEBjARLTSG6w3TUVM6MGuwoU87sAWnAifjm9CYHtXxum"
 			]
 		}
 	},

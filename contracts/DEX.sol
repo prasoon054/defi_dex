@@ -37,7 +37,7 @@ contract DEX {
 
         // If liquidity already exists, enforce the deposit ratio equals the current pool ratio.
         if (reserveA > 0 || reserveB > 0) {
-            require(reserveA * amountB == reserveB * amountA, "DEX: Deposit must preserve pool ratio");
+            require(reserveA / reserveB == amountA / amountB, "DEX: Deposit must preserve pool ratio");
         }
 
         // Transfer tokens from LP into this contract (user must approve beforehand)
@@ -49,7 +49,8 @@ contract DEX {
         if (totalSupply == 0) {
             // For the first deposit, mint liquidity tokens based on the geometric mean.
             liquidity = sqrt(amountA * amountB);
-        } else {
+        }
+        else {
             // For subsequent deposits, mint LP tokens proportional to existing reserves.
             // Calculate liquidity tokens based on TokenA and TokenB deposits.
             uint256 liquidityA = (amountA * totalSupply) / reserveA;
@@ -160,7 +161,8 @@ contract DEX {
                 z = x;
                 x = (y / x + x) / 2;
             }
-        } else if (y != 0) {
+        }
+        else if (y != 0) {
             z = 1;
         }
     }
